@@ -1,0 +1,26 @@
+{
+  "name": "Converter - 단위 변환기",
+  "short_name": "Converter",
+  "description": "오프라인 지원 단위 변환 앱",
+  "start_url": "./?source=pwa",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4CAF50",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "lang": "ko-KR"
+}

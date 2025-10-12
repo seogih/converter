@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4CAF50">
+  <title>Converter</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      touch-action: manipulation;
+    }
+    .app-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      min-height: 100vh;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 16px;
+      background: #4CAF50;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .top-bar button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 14px;
+      padding: 8px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .top-bar h1 {
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .output-section {
+      padding: 16px;
+    }
+    .output-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 2px;
+      min-height: 50px;
+    }
+    .output-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 2px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      min-height: 44px;
+      overflow: hidden;
+    }
+    .output-cell input {
+      border: none;
+      outline: none;
+      font-size: 18px;
+      width: 100%;
+      font-family: inherit;
+    }
+    .output-cell input::-webkit-inner-spin-button,
+    .output-cell input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .output-cell input[type=number] {
+      -moz-appearance: textfield;
+    }
+    .output-value {
+      font-size: 18px;
+      font-weight: 500;
+      flex: 1;
+      word-break: break-all;
+    }
+    .output-unit {
+      font-size: 14px;
+      color: #666;
+      white-space: nowrap;
+    }
+    .equals {
+      font-size: 20px;
+      color: #666;
+    }
+    .row-b .output-cell:first-child {
+      background: #e8f5e9;
+    }
+    .button-grid {
+      padding: 2px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .button-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .convert-btn {
+      flex: 1;
+      min-width: 70px;
+      min-height: 44px;
+      padding: 12px 16px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+    .convert-btn:active {
+      background: #1976D2;
+    }
+    .convert-btn.active {
+      background: #FF9800;
+    }
+    .settings-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: white;
+      z-index: 200;
+      overflow-y: auto;
+    }
+    .settings-screen.active {
+      display: block;
+    }
+    .settings-content {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .settings-grid {
+      margin: 20px 0;
+    }
+    .settings-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .draggable-btn {
+      flex: 1;
+      min-width: 70px;
+      min-height: 44px;
+      padding: 12px 16px;
+      background: #E3F2FD;
+      color: #1976D2;
+      border: 2px solid #2196F3;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: move;
+      user-select: none;
+      touch-action: none;
+    }
+    .draggable-btn.dragging {
+      opacity: 0.5;
+    }
+    .exchange-rate-input {
+      margin: 20px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .exchange-rate-input input {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .settings-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .settings-actions button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .save-btn {
+      background: #4CAF50;
+      color: white;
+    }
+    .cancel-btn {
+      background: #f5f5f5;
+      color: #333;
+    }
+    .default-btn {
+      background: #FF9800;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="top-bar">
+      <button id="clearBtn">Clear</button>
+      <h1>Converter</h1>
+      <button id="settingsBtn">Settings</button>
+    </div>
+
+    <div class="output-section">
+      <div class="output-row row-a">
+        <div class="output-cell">
+          <input type="text" id="mainInput" inputmode="decimal" placeholder="0">
+          <span class="output-unit" id="inputUnit"></span>
+        </div>
+        <div class="equals">=</div>
+        <div class="output-cell">
+          <span class="output-value" id="outputA"></span>
+          <span class="output-unit" id="outputUnitA"></span>
+        </div>
+      </div>
+
+      <div class="output-row row-b">
+        <div class="output-cell">
+          <span class="output-value" id="inputB"></span>
+          <span class="output-unit" id="inputUnitB"></span>
+        </div>
+        <div class="equals">=</div>
+        <div class="output-cell">
+          <span class="output-value" id="outputB"></span>
+          <span class="output-unit" id="outputUnitB"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="button-grid" id="buttonGrid"></div>
+  </div>
+
+  <div class="settings-screen" id="settingsScreen">
+    <div class="top-bar">
+      <div></div>
+      <h1>Converter Settings</h1>
+      <div></div>
+    </div>
+    <div class="settings-content">
+      <div class="settings-grid" id="settingsGrid"></div>
+      <div class="exchange-rate-input">
+        <input type="number" id="exchangeRateInput" placeholder="1400" step="0.01">
+        <span>₩/USD</span>
+      </div>
+      <div class="settings-actions">
+        <button class="cancel-btn" id="cancelBtn">Cancel</button>
+        <button class="default-btn" id="defaultBtn">Default</button>
+        <button class="save-btn" id="saveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_ORDER = {
+      row1: ['$/lb', 'lb', 'oz', 'F'],
+      row2: ['ft.in', 'mile', 'mpg', 'gallon']
+    };
+    const DEFAULT_RATE = 1400;
+
+    let currentMode = null;
+    let exchangeRate = DEFAULT_RATE;
+    let buttonOrder = JSON.parse(JSON.stringify(DEFAULT_ORDER));
+
+    function loadSettings() {
+      const saved = localStorage.getItem('buttonOrder');
+      const savedRate = localStorage.getItem('exchangeRate');
+      if (saved) buttonOrder = JSON.parse(saved);
+      if (savedRate) exchangeRate = parseFloat(savedRate);
+    }
+
+    function saveSettings() {
+      localStorage.setItem('buttonOrder', JSON.stringify(buttonOrder));
+      localStorage.setItem('exchangeRate', exchangeRate.toString());
+    }
+
+    function formatNumber(num, decimals = 0) {
+      if (decimals === 0) return Math.round(num).toLocaleString('en-US');
+      return num.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function convert() {
+      const input = document.getElementById('mainInput').value;
+      const val = parseFloat(input) || 0;
+      
+      let outputA = '', unitA = '', inputB = '', unitInputB = '', outputB = '', unitB = '';
+
+      if (!currentMode || val === 0) {
+        document.getElementById('outputA').textContent = '';
+        document.getElementById('outputUnitA').textContent = '';
+        document.getElementById('inputB').textContent = '';
+        document.getElementById('inputUnitB').textContent = '';
+        document.getElementById('outputB').textContent = '';
+        document.getElementById('outputUnitB').textContent = '';
+        return;
+      }
+
+      switch(currentMode) {
+        case '$/lb':
+          outputA = formatNumber(val * 2.20462262, 2);
+          unitA = '$/kg';
+          inputB = formatNumber(val, 2);
+          unitInputB = '$/lb';
+          const wonPerKg = val * 2.20462262 * exchangeRate;
+          outputB = formatNumber(Math.round(wonPerKg / 10) * 10);
+          unitB = '₩/kg';
+          break;
+
+        case 'lb':
+          const kg = val * 0.45359237;
+          if (kg >= 1) {
+            outputA = formatNumber(kg, 2);
+            unitA = 'kg';
+          } else {
+            outputA = formatNumber(kg * 1000);
+            unitA = 'g';
+          }
+          inputB = formatNumber(val, 2);
+          unitInputB = 'kg';
+          outputB = formatNumber(val * 2.20462262, 2);
+          unitB = 'lb';
+          break;
+
+        case 'oz':
+          const g = val * 28.349523125;
+          if (g >= 1000) {
+            outputA = formatNumber(g / 1000, 2);
+            unitA = 'kg';
+          } else {
+            outputA = formatNumber(g);
+            unitA = 'g';
+          }
+          inputB = formatNumber(val);
+          unitInputB = 'g';
+          outputB = formatNumber(val / 28.349523125, 2);
+          unitB = 'oz';
+          break;
+
+        case 'ft.in':
+          const parts = input.split('.');
+          const feet = parseInt(parts[0]) || 0;
+          const inches = parseInt(parts[1]) || 0;
+          const totalInches = feet * 12 + inches;
+          const cm = totalInches * 2.54;
+          const m = cm / 100;
+          
+          if (m >= 1) {
+            outputA = formatNumber(m, 2);
+            unitA = 'm';
+          } else {
+            outputA = formatNumber(cm);
+            unitA = 'cm';
+          }
+          
+          const meters = val;
+          const totalIn = meters * 100 / 2.54;
+          const ft = Math.floor(totalIn / 12);
+          const inch = Math.round(totalIn % 12);
+          inputB = formatNumber(val, 1);
+          unitInputB = 'm';
+          outputB = `${ft}' ${inch}"`;
+          unitB = '';
+          break;
+
+        case 'mile':
+          outputA = formatNumber(val * 1.609344, 2);
+          unitA = 'km';
+          inputB = formatNumber(val, 2);
+          unitInputB = 'km';
+          outputB = formatNumber(val / 1.609344, 2);
+          unitB = 'mile';
+          break;
+
+        case 'mpg':
+          outputA = formatNumber(val * 0.425143707, 2);
+          unitA = 'km/L';
+          inputB = formatNumber(val, 2);
+          unitInputB = 'km/L';
+          outputB = formatNumber(val / 0.425143707, 2);
+          unitB = 'mpg';
+          break;
+
+        case 'gallon':
+          outputA = formatNumber(val * 3.785411784, 2);
+          unitA = 'liter';
+          inputB = formatNumber(val, 2);
+          unitInputB = 'liter';
+          outputB = formatNumber(val / 3.785411784, 2);
+          unitB = 'gallon';
+          break;
+
+        case 'F':
+          const celsius = (val - 32) * 5 / 9;
+          outputA = formatNumber(celsius);
+          unitA = '°C';
+          inputB = formatNumber(val);
+          unitInputB = '°C';
+          outputB = formatNumber(val * 9 / 5 + 32);
+          unitB = '°F';
+          break;
+      }
+
+      document.getElementById('outputA').textContent = outputA;
+      document.getElementById('outputUnitA').textContent = unitA;
+      document.getElementById('inputB').textContent = inputB;
+      document.getElementById('inputUnitB').textContent = unitInputB;
+      document.getElementById('outputB').textContent = outputB;
+      document.getElementById('outputUnitB').textContent = unitB;
+    }
+
+    function renderButtons() {
+      const grid = document.getElementById('buttonGrid');
+      grid.innerHTML = '';
+      
+      [buttonOrder.row1, buttonOrder.row2].forEach(row => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'button-row';
+        row.forEach(mode => {
+          const btn = document.createElement('button');
+          btn.className = 'convert-btn';
+          btn.textContent = mode;
+          if (mode === currentMode) btn.classList.add('active');
+          btn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            currentMode = mode;
+            document.getElementById('inputUnit').textContent = mode;
+            renderButtons();
+            convert();
+            document.getElementById('mainInput').focus();
+          });
+          rowDiv.appendChild(btn);
+        });
+        grid.appendChild(rowDiv);
+      });
+    }
+
+    function renderSettings() {
+      const grid = document.getElementById('settingsGrid');
+      grid.innerHTML = '';
+      
+      const tempOrder = JSON.parse(JSON.stringify(buttonOrder));
+      
+      [tempOrder.row1, tempOrder.row2].forEach((row, rowIdx) => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'settings-row';
+        rowDiv.dataset.row = rowIdx;
+        
+        row.forEach((mode, idx) => {
+          const btn = document.createElement('div');
+          btn.className = 'draggable-btn';
+          btn.textContent = mode;
+          btn.draggable = true;
+          btn.dataset.row = rowIdx;
+          btn.dataset.idx = idx;
+          
+          btn.addEventListener('dragstart', (e) => {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', JSON.stringify({row: rowIdx, idx}));
+            btn.classList.add('dragging');
+          });
+          
+          btn.addEventListener('dragend', () => {
+            btn.classList.remove('dragging');
+          });
+          
+          btn.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+          });
+          
+          btn.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            const fromRow = data.row;
+            const fromIdx = data.idx;
+            const toRow = parseInt(btn.dataset.row);
+            const toIdx = parseInt(btn.dataset.idx);
+            
+            const item = tempOrder[`row${fromRow + 1}`][fromIdx];
+            tempOrder[`row${fromRow + 1}`].splice(fromIdx, 1);
+            tempOrder[`row${toRow + 1}`].splice(toIdx, 0, item);
+            
+            buttonOrder = tempOrder;
+            renderSettings();
+          });
+          
+          rowDiv.appendChild(btn);
+        });
+        grid.appendChild(rowDiv);
+      });
+      
+      document.getElementById('exchangeRateInput').value = exchangeRate;
+    }
+
+    document.getElementById('mainInput').addEventListener('input', (e) => {
+      let val = e.target.value;
+      if (!/^-?\d*\.?\d*$/.test(val)) {
+        e.target.value = val.slice(0, -1);
+        return;
+      }
+      convert();
+    });
+
+    document.getElementById('clearBtn').addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      document.getElementById('mainInput').value = '';
+      currentMode = null;
+      document.getElementById('inputUnit').textContent = '';
+      renderButtons();
+      convert();
+      document.getElementById('mainInput').focus();
+    });
+
+    document.getElementById('settingsBtn').addEventListener('click', () => {
+      document.getElementById('settingsScreen').classList.add('active');
+      renderSettings();
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      loadSettings();
+      document.getElementById('settingsScreen').classList.remove('active');
+      renderButtons();
+    });
+
+    document.getElementById('defaultBtn').addEventListener('click', () => {
+      buttonOrder = JSON.parse(JSON.stringify(DEFAULT_ORDER));
+      exchangeRate = DEFAULT_RATE;
+      renderSettings();
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      exchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || DEFAULT_RATE;
+      saveSettings();
+      document.getElementById('settingsScreen').classList.remove('active');
+      renderButtons();
+      convert();
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              if (confirm('새로운 버전이 있습니다. 업데이트하시겠습니까?')) {
+                window.location.reload();
+              }
+            }
+          });
+        });
+      });
+    }
+
+    loadSettings();
+    renderButtons();
+    document.getElementById('mainInput').focus();
+  </script>
+</body>
+</html>
