@@ -25,6 +25,7 @@
       margin: 0 auto;
       background: white;
       min-height: 100vh;
+      padding-bottom: 80px;
     }
     .top-bar {
       display: flex;
@@ -49,6 +50,9 @@
     .top-bar h1 {
       font-size: 18px;
       font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .output-section {
       padding: 16px;
@@ -108,23 +112,21 @@
       padding: 2px 16px 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
     }
     .button-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      flex-wrap: wrap;
     }
     .convert-btn {
-      flex: 1;
-      min-width: 70px;
       min-height: 44px;
-      padding: 12px 16px;
+      padding: 12px 8px;
       background: #2196F3;
       color: white;
       border: none;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
       user-select: none;
       transition: background 0.2s;
@@ -158,40 +160,69 @@
       margin: 20px 0;
     }
     .settings-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
+      margin-bottom: 8px;
     }
     .draggable-btn {
-      flex: 1;
-      min-width: 70px;
       min-height: 44px;
-      padding: 12px 16px;
+      padding: 12px 8px;
       background: #E3F2FD;
       color: #1976D2;
       border: 2px solid #2196F3;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 15px;
       cursor: move;
       user-select: none;
       touch-action: none;
+      text-align: center;
     }
     .draggable-btn.dragging {
       opacity: 0.5;
     }
-    .exchange-rate-input {
+    .exchange-rate-section {
       margin: 20px 0;
+    }
+    .exchange-rate-input {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 10px;
     }
-    .exchange-rate-input input {
+    .rate-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .rate-input-row input {
       flex: 1;
       padding: 12px;
       border: 1px solid #ddd;
       border-radius: 8px;
       font-size: 16px;
+    }
+    .rate-input-row input[type="text"] {
+      max-width: 80px;
+      text-transform: uppercase;
+    }
+    .rate-input-row span {
+      font-size: 16px;
+      color: #666;
+      white-space: nowrap;
+    }
+    .fetch-rate-btn {
+      width: 100%;
+      padding: 12px 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .fetch-rate-btn:active {
+      background: #45a049;
     }
     .settings-actions {
       display: flex;
@@ -219,13 +250,87 @@
       background: #FF9800;
       color: white;
     }
+    .update-banner, .install-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px;
+      background: #323232;
+      color: white;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 300;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .update-banner.show, .install-banner.show {
+      display: flex;
+    }
+    .banner-message {
+      flex: 1;
+      font-size: 14px;
+    }
+    .banner-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .banner-actions button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .update-btn {
+      background: #4CAF50;
+      color: white;
+    }
+    .install-btn {
+      background: #2196F3;
+      color: white;
+    }
+    .dismiss-btn {
+      background: transparent;
+      color: #ccc;
+      border: 1px solid #666 !important;
+    }
+    .version-info {
+      margin: 20px 0;
+      padding: 12px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+    }
+    .online-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-left: 6px;
+    }
+    .online-indicator.online {
+      background: #4CAF50;
+    }
+    .online-indicator.offline {
+      background: #f44336;
+    }
   </style>
 </head>
 <body>
   <div class="app-container">
     <div class="top-bar">
       <button id="clearBtn">Clear</button>
-      <h1>Converter</h1>
+      <h1>
+        Converter
+        <span class="online-indicator" id="onlineIndicator"></span>
+      </h1>
       <button id="settingsBtn">Settings</button>
     </div>
 
@@ -266,9 +371,21 @@
     </div>
     <div class="settings-content">
       <div class="settings-grid" id="settingsGrid"></div>
-      <div class="exchange-rate-input">
-        <input type="number" id="exchangeRateInput" placeholder="1400" step="0.01">
-        <span>₩/USD</span>
+      
+      <div class="exchange-rate-section">
+        <div class="exchange-rate-input">
+          <div class="rate-input-row">
+            <input type="number" id="exchangeRateInput" placeholder="1400" step="0.01">
+            <input type="text" id="currencyCode" placeholder="KRW" maxlength="3">
+            <span>/USD</span>
+          </div>
+          <button class="fetch-rate-btn" id="fetchRateBtn">현재 환율</button>
+        </div>
+      </div>
+      
+      <div class="version-info" id="versionInfo">
+        <div>버전: <span id="appVersion">1.0.4</span></div>
+        <div id="lastUpdateCheck"></div>
       </div>
       <div class="settings-actions">
         <button class="cancel-btn" id="cancelBtn">Cancel</button>
@@ -278,32 +395,244 @@
     </div>
   </div>
 
+  <div class="update-banner" id="updateBanner">
+    <div class="banner-message">새로운 버전이 있습니다!</div>
+    <div class="banner-actions">
+      <button class="dismiss-btn" id="dismissUpdate">나중에</button>
+      <button class="update-btn" id="updateNow">업데이트</button>
+    </div>
+  </div>
+
+  <div class="install-banner" id="installBanner">
+    <div class="banner-message">홈 화면에 추가하여 더 빠르게 사용하세요!</div>
+    <div class="banner-actions">
+      <button class="dismiss-btn" id="dismissInstall">닫기</button>
+      <button class="install-btn" id="installApp">설치</button>
+    </div>
+  </div>
+
   <script>
+    const APP_VERSION = '1.0.5';
     const DEFAULT_ORDER = {
-      row1: ['$/lb', 'lb', 'oz', 'F'],
-      row2: ['ft.in', 'mile', 'mpg', 'gallon']
+      row1: ['$/lb', 'lb.oz', 'lb', 'F'],
+      row2: ['shoes', 'ft.in', 'ft', '$'],
+      row3: ['mile', 'mpg', 'gallon', 'yard']
     };
     const DEFAULT_RATE = 1400;
+    const DEFAULT_CURRENCY = 'KRW';
 
     let currentMode = null;
     let exchangeRate = DEFAULT_RATE;
-    let buttonOrder = JSON.parse(JSON.stringify(DEFAULT_ORDER));
+    let currencyCode = DEFAULT_CURRENCY;
+    let buttonOrder = {
+      row1: ['$/lb', 'lb.oz', 'lb', 'F'],
+      row2: ['shoes', 'ft.in', 'ft', '$'],
+      row3: ['mile', 'mpg', 'gallon', 'yard']
+    };
+    let deferredPrompt;
+    let isOnline = navigator.onLine;
+
+    // 신발 사이즈 변환 테이블 (첨부된 PDF 기반 - 정확한 데이터)
+    const SHOE_SIZES = {
+      // 한국(mm) -> US 사이즈
+      mmToUs: {
+        145: { men: null, women: null, youth: 8.5 },
+        150: { men: null, women: null, youth: 9 },
+        155: { men: null, women: null, youth: 9.5 },
+        160: { men: null, women: null, youth: 10 },
+        165: { men: null, women: null, youth: 10.5 },
+        170: { men: null, women: null, youth: 11 },
+        175: { men: null, women: null, youth: 11.5 },
+        180: { men: null, women: null, youth: 12 },
+        185: { men: null, women: null, youth: 12.5 },
+        190: { men: null, women: null, youth: 13 },
+        195: { men: null, women: null, youth: 13.5 },
+        200: { men: null, women: null, youth: 1 },
+        205: { men: null, women: null, youth: 1.5 },
+        210: { men: null, women: 4, youth: 2 },
+        215: { men: null, women: 4.5, youth: 2.5 },
+        220: { men: null, women: 5, youth: 3 },
+        225: { men: null, women: 5.5, youth: 3.5 },
+        230: { men: null, women: 6, youth: 4 },
+        235: { men: null, women: 6.5, youth: 4.5 },
+        240: { men: 6, women: 7, youth: 5 },
+        245: { men: 6.5, women: 7.5, youth: 5.5 },
+        250: { men: 7, women: 8, youth: 6 },
+        255: { men: 7.5, women: 8.5, youth: 6.5 },
+        260: { men: 8, women: 9, youth: 7 },
+        265: { men: 8.5, women: 9.5, youth: 7.5 },
+        270: { men: 9, women: 10, youth: 8 },
+        275: { men: 9.5, women: 10.5, youth: 8.5 },
+        280: { men: 10, women: 11, youth: 9 },
+        285: { men: 10.5, women: 11.5, youth: 9.5 },
+        290: { men: 11, women: 12, youth: 10 },
+        295: { men: 11.5, women: 12.5, youth: null },
+        300: { men: 12, women: 13, youth: null }
+      },
+      // 한국(mm) -> EU 사이즈
+      mmToEu: {
+        145: { men: null, women: null, kids: 25.5 },
+        150: { men: null, women: null, kids: 26 },
+        155: { men: null, women: null, kids: 26.5 },
+        160: { men: null, women: null, kids: 27 },
+        165: { men: null, women: null, kids: 27.5 },
+        170: { men: null, women: null, kids: 28 },
+        175: { men: null, women: null, kids: 28.5 },
+        180: { men: null, women: null, kids: 29 },
+        185: { men: null, women: null, kids: 30 },
+        190: { men: null, women: null, kids: 31 },
+        195: { men: null, women: null, kids: 31.5 },
+        200: { men: null, women: null, kids: 32 },
+        205: { men: null, women: null, kids: 33 },
+        210: { men: null, women: 34, kids: 33.5 },
+        215: { men: null, women: 34.5, kids: 34 },
+        220: { men: null, women: 35, kids: 35 },
+        225: { men: null, women: 35.5, kids: 35.5 },
+        230: { men: null, women: 36, kids: 36 },
+        235: { men: null, women: 36.5, kids: 36.5 },
+        240: { men: 38.5, women: 37, kids: 37 },
+        245: { men: 39, women: 37.5, kids: 38 },
+        250: { men: 40, women: 38, kids: 38.5 },
+        255: { men: 40.5, women: 38.5, kids: 39 },
+        260: { men: 41, women: 39, kids: 40 },
+        265: { men: 42, women: 39.5, kids: 41 },
+        270: { men: 42.5, women: 40, kids: 42 },
+        275: { men: 43, women: 40.5, kids: 43 },
+        280: { men: 44, women: 41, kids: 44 },
+        285: { men: 44.5, women: 41.5, kids: 45 },
+        290: { men: 45, women: 42, kids: 46 },
+        295: { men: 45.5, women: 42.5, kids: 47 },
+        300: { men: 46, women: 43, kids: 48 }
+      }
+    };
+
+    // 역방향 변환용 헬퍼 함수들
+    function findMmFromUsSize(size, type) {
+      for (let [mm, sizes] of Object.entries(SHOE_SIZES.mmToUs)) {
+        if (sizes[type] === size) return parseInt(mm);
+      }
+      return null;
+    }
+
+    function findMmFromEuSize(size, type) {
+      for (let [mm, sizes] of Object.entries(SHOE_SIZES.mmToEu)) {
+        if (sizes[type] === size) return parseInt(mm);
+      }
+      return null;
+    }
+
+    function updateOnlineStatus() {
+      const indicator = document.getElementById('onlineIndicator');
+      isOnline = navigator.onLine;
+      indicator.className = `online-indicator ${isOnline ? 'online' : 'offline'}`;
+      indicator.title = isOnline ? '온라인' : '오프라인';
+    }
 
     function loadSettings() {
-      const saved = localStorage.getItem('buttonOrder');
-      const savedRate = localStorage.getItem('exchangeRate');
-      if (saved) buttonOrder = JSON.parse(saved);
-      if (savedRate) exchangeRate = parseFloat(savedRate);
+      try {
+        const saved = localStorage.getItem('buttonOrder');
+        const savedRate = localStorage.getItem('exchangeRate');
+        const savedCurrency = localStorage.getItem('currencyCode');
+        
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.row1 && parsed.row2 && parsed.row3) {
+            buttonOrder = parsed;
+          }
+        }
+        if (savedRate) exchangeRate = parseFloat(savedRate);
+        if (savedCurrency) currencyCode = savedCurrency;
+      } catch (e) {
+        console.error('Load settings error:', e);
+      }
     }
 
     function saveSettings() {
       localStorage.setItem('buttonOrder', JSON.stringify(buttonOrder));
       localStorage.setItem('exchangeRate', exchangeRate.toString());
+      localStorage.setItem('currencyCode', currencyCode);
     }
 
     function formatNumber(num, decimals = 0) {
       if (decimals === 0) return Math.round(num).toLocaleString('en-US');
       return num.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function formatWithK(num, decimals = 0) {
+      if (Math.abs(num) >= 1000000) {
+        return Math.round(num / 1000).toLocaleString('en-US') + 'k';
+      }
+      return formatNumber(num, decimals);
+    }
+
+    function formatCurrency(num) {
+      if (Math.abs(num) >= 1000) {
+        return Math.round(num).toLocaleString('en-US');
+      }
+      return formatNumber(num, 2);
+    }
+
+
+    function convertShoeSize(val) {
+      let outputA = '', unitA = '', inputB = '', unitInputB = '', outputB = '', unitB = '';
+
+      // MM 입력 (145-300, 5mm 단위)
+      if (val >= 145 && val <= 300 && val % 5 === 0) {
+        const mm = val;
+        const usData = SHOE_SIZES.mmToUs[mm];
+
+        if (usData) {
+          // 오른쪽 위: US Men MM
+          outputA = usData.men || '-';
+          unitA = 'mm M';
+          // 왼쪽 아래: US Youth MM
+          inputB = usData.youth || '-';
+          unitInputB = 'mm Y';
+          // 오른쪽 아래: US Women MM
+          outputB = usData.women || '-';
+          unitB = 'mm F';
+        }
+      }
+      // US 사이즈 입력 (0.5-13.5)
+      else if (val >= 0.5 && val <= 13.5) {
+        // 각 카테고리에서 MM 찾기
+        let mmMen = findMmFromUsSize(val, 'men');
+        let mmWomen = findMmFromUsSize(val, 'women');
+        let mmYouth = findMmFromUsSize(val, 'youth');
+
+        // 오른쪽 위: US Men의 MM
+        outputA = mmMen || '-';
+        unitA = 'mm M';
+
+        // 왼쪽 아래: US Youth의 MM
+        inputB = mmYouth || '-';
+        unitInputB = 'mm Y';
+
+        // 오른쪽 아래: US Women의 MM
+        outputB = mmWomen || '-';
+        unitB = 'mm F';
+      }
+      // EU 사이즈 입력 (25-48)
+      else if (val >= 25 && val <= 48) {
+        // 각 카테고리에서 MM 찾기
+        let mmMen = findMmFromEuSize(val, 'men');
+        let mmWomen = findMmFromEuSize(val, 'women');
+        let mmKids = findMmFromEuSize(val, 'kids');
+
+        // 오른쪽 위: EU Men의 MM
+        outputA = mmMen || '-';
+        unitA = 'mm M';
+
+        // 왼쪽 아래: EU Kids의 MM
+        inputB = mmKids || '-';
+        unitInputB = 'mm Y';
+
+        // 오른쪽 아래: EU Women의 MM
+        outputB = mmWomen || '-';
+        unitB = 'mm F';
+      }
+
+      return { outputA, unitA, inputB, unitInputB, outputB, unitB };
     }
 
     function convert() {
@@ -324,22 +653,54 @@
 
       switch(currentMode) {
         case '$/lb':
-          outputA = formatNumber(val * 2.20462262, 2);
+          const pricePerKg = val * 2.20462262;
+          outputA = formatNumber(pricePerKg, 2);
           unitA = '$/kg';
           inputB = formatNumber(val, 2);
           unitInputB = '$/lb';
-          const wonPerKg = val * 2.20462262 * exchangeRate;
-          outputB = formatNumber(Math.round(wonPerKg / 10) * 10);
-          unitB = '₩/kg';
+          const localPricePerKg = pricePerKg * exchangeRate;
+          outputB = formatWithK(Math.round(localPricePerKg));
+          unitB = `${currencyCode}/kg`;
           break;
 
-        case 'lb':
-          const kg = val * 0.45359237;
+        case 'lb.oz':
+          const parts = input.split('.');
+          const pounds = parseInt(parts[0]) || 0;
+          const ounces = parseInt(parts[1]) || 0;
+          const totalOz = pounds * 16 + ounces;
+          const kg = totalOz * 0.0283495;
+          
           if (kg >= 1) {
             outputA = formatNumber(kg, 2);
             unitA = 'kg';
           } else {
             outputA = formatNumber(kg * 1000);
+            unitA = 'g';
+          }
+          
+          const kgInput = val;
+          const totalOzFromKg = kgInput / 0.0283495;
+          const lbFromKg = Math.floor(totalOzFromKg / 16);
+          const ozFromKg = Math.round(totalOzFromKg % 16);
+          
+          if (val < 1) {
+            inputB = formatNumber(val * 1000);
+            unitInputB = 'g';
+          } else {
+            inputB = formatNumber(val, 2);
+            unitInputB = 'kg';
+          }
+          outputB = `${lbFromKg} lb ${ozFromKg} oz`;
+          unitB = '';
+          break;
+
+        case 'lb':
+          const kgFromLb = val * 0.45359237;
+          if (kgFromLb >= 1) {
+            outputA = formatNumber(kgFromLb, 2);
+            unitA = 'kg';
+          } else {
+            outputA = formatNumber(kgFromLb * 1000);
             unitA = 'g';
           }
           inputB = formatNumber(val, 2);
@@ -348,50 +709,94 @@
           unitB = 'lb';
           break;
 
-        case 'oz':
-          const g = val * 28.349523125;
-          if (g >= 1000) {
-            outputA = formatNumber(g / 1000, 2);
-            unitA = 'kg';
-          } else {
-            outputA = formatNumber(g);
-            unitA = 'g';
-          }
+        case 'F':
+          const celsius = (val - 32) * 5 / 9;
+          outputA = formatNumber(celsius);
+          unitA = '°C';
           inputB = formatNumber(val);
-          unitInputB = 'g';
-          outputB = formatNumber(val / 28.349523125, 2);
-          unitB = 'oz';
+          unitInputB = '°C';
+          outputB = formatNumber(val * 9 / 5 + 32);
+          unitB = '°F';
+          break;
+
+        case 'shoes':
+          const shoeResult = convertShoeSize(val);
+          outputA = shoeResult.outputA;
+          unitA = shoeResult.unitA;
+          inputB = shoeResult.inputB;
+          unitInputB = shoeResult.unitInputB;
+          outputB = shoeResult.outputB;
+          unitB = shoeResult.unitB;
           break;
 
         case 'ft.in':
-          const parts = input.split('.');
-          const feet = parseInt(parts[0]) || 0;
-          const inches = parseInt(parts[1]) || 0;
+          const ftInParts = input.split('.');
+          const feet = parseInt(ftInParts[0]) || 0;
+          const inches = parseInt(ftInParts[1]) || 0;
           const totalInches = feet * 12 + inches;
-          const cm = totalInches * 2.54;
-          const m = cm / 100;
+          const cmFromFtIn = totalInches * 2.54;
+          const mFromFtIn = cmFromFtIn / 100;
           
-          if (m >= 1) {
-            outputA = formatNumber(m, 2);
+          if (mFromFtIn >= 1) {
+            outputA = formatNumber(mFromFtIn, 2);
             unitA = 'm';
           } else {
-            outputA = formatNumber(cm);
+            outputA = formatNumber(cmFromFtIn);
             unitA = 'cm';
           }
           
-          const meters = val;
-          const totalIn = meters * 100 / 2.54;
-          const ft = Math.floor(totalIn / 12);
-          const inch = Math.round(totalIn % 12);
-          inputB = formatNumber(val, 1);
-          unitInputB = 'm';
-          outputB = `${ft}' ${inch}"`;
+          const metersInput = val;
+          const totalInFromM = metersInput * 100 / 2.54;
+          const ftFromM = Math.floor(totalInFromM / 12);
+          const inFromM = Math.round(totalInFromM % 12);
+          
+          if (val < 1) {
+            inputB = formatNumber(val * 100);
+            unitInputB = 'cm';
+          } else {
+            inputB = formatNumber(val, 1);
+            unitInputB = 'm';
+          }
+          outputB = `${ftFromM}' ${inFromM}"`;
           unitB = '';
           break;
 
+        case 'ft':
+          const mFromFt = val * 0.3048;
+          if (mFromFt >= 1) {
+            outputA = formatNumber(mFromFt, 2);
+            unitA = 'm';
+          } else {
+            outputA = formatNumber(mFromFt * 100);
+            unitA = 'cm';
+          }
+          inputB = formatNumber(val, 2);
+          unitInputB = 'm';
+          outputB = formatNumber(val / 0.3048, 2);
+          unitB = 'ft';
+          break;
+
+        case '$':
+          const localAmount = val * exchangeRate;
+          outputA = formatWithK(localAmount);
+          unitA = currencyCode;
+
+          const dollarAmount = val / exchangeRate;
+          inputB = formatWithK(val);
+          unitInputB = currencyCode;
+          outputB = formatCurrency(dollarAmount);
+          unitB = '$';
+          break;
+
         case 'mile':
-          outputA = formatNumber(val * 1.609344, 2);
-          unitA = 'km';
+          const kmFromMile = val * 1.609344;
+          if (kmFromMile >= 1) {
+            outputA = formatNumber(kmFromMile, 2);
+            unitA = 'km';
+          } else {
+            outputA = formatNumber(kmFromMile * 1000);
+            unitA = 'm';
+          }
           inputB = formatNumber(val, 2);
           unitInputB = 'km';
           outputB = formatNumber(val / 1.609344, 2);
@@ -416,14 +821,13 @@
           unitB = 'gallon';
           break;
 
-        case 'F':
-          const celsius = (val - 32) * 5 / 9;
-          outputA = formatNumber(celsius);
-          unitA = '°C';
-          inputB = formatNumber(val);
-          unitInputB = '°C';
-          outputB = formatNumber(val * 9 / 5 + 32);
-          unitB = '°F';
+        case 'yard':
+          outputA = formatNumber(val * 0.9144, 2);
+          unitA = 'm';
+          inputB = formatNumber(val, 2);
+          unitInputB = 'm';
+          outputB = formatNumber(val / 0.9144, 2);
+          unitB = 'yard';
           break;
       }
 
@@ -439,16 +843,22 @@
       const grid = document.getElementById('buttonGrid');
       grid.innerHTML = '';
       
-      [buttonOrder.row1, buttonOrder.row2].forEach(row => {
+      const rows = [buttonOrder.row1, buttonOrder.row2, buttonOrder.row3];
+      
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !Array.isArray(row)) continue;
+        
         const rowDiv = document.createElement('div');
         rowDiv.className = 'button-row';
-        row.forEach(mode => {
+        
+        for (let j = 0; j < row.length; j++) {
+          const mode = row[j];
           const btn = document.createElement('button');
           btn.className = 'convert-btn';
           btn.textContent = mode;
           if (mode === currentMode) btn.classList.add('active');
-          btn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
+          btn.addEventListener('click', () => {
             currentMode = mode;
             document.getElementById('inputUnit').textContent = mode;
             renderButtons();
@@ -456,23 +866,33 @@
             document.getElementById('mainInput').focus();
           });
           rowDiv.appendChild(btn);
-        });
+        }
         grid.appendChild(rowDiv);
-      });
+      }
     }
 
     function renderSettings() {
       const grid = document.getElementById('settingsGrid');
       grid.innerHTML = '';
       
-      const tempOrder = JSON.parse(JSON.stringify(buttonOrder));
+      const tempOrder = {
+        row1: [...buttonOrder.row1],
+        row2: [...buttonOrder.row2],
+        row3: [...buttonOrder.row3]
+      };
       
-      [tempOrder.row1, tempOrder.row2].forEach((row, rowIdx) => {
+      const rows = [tempOrder.row1, tempOrder.row2, tempOrder.row3];
+      
+      for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+        const row = rows[rowIdx];
+        if (!row) continue;
+        
         const rowDiv = document.createElement('div');
         rowDiv.className = 'settings-row';
         rowDiv.dataset.row = rowIdx;
         
-        row.forEach((mode, idx) => {
+        for (let idx = 0; idx < row.length; idx++) {
+          const mode = row[idx];
           const btn = document.createElement('div');
           btn.className = 'draggable-btn';
           btn.textContent = mode;
@@ -512,12 +932,141 @@
           });
           
           rowDiv.appendChild(btn);
-        });
+        }
         grid.appendChild(rowDiv);
-      });
+      }
       
       document.getElementById('exchangeRateInput').value = exchangeRate;
+      document.getElementById('currencyCode').value = currencyCode;
+      
+      const lastCheck = localStorage.getItem('lastUpdateCheck');
+      if (lastCheck) {
+        const date = new Date(parseInt(lastCheck));
+        document.getElementById('lastUpdateCheck').textContent = 
+          `마지막 확인: ${date.toLocaleString('ko-KR')}`;
+      }
     }
+
+    async function fetchCurrentExchangeRate() {
+      if (!isOnline) {
+        alert('온라인 상태에서만 환율을 가져올 수 있습니다.');
+        return;
+      }
+      
+      const currency = document.getElementById('currencyCode').value.toUpperCase() || 'KRW';
+      const btn = document.getElementById('fetchRateBtn');
+      btn.textContent = '가져오는 중...';
+      btn.disabled = true;
+      
+      try {
+        // 엔화 KRW/JPY 변환 지원
+        let targetCurrency = currency;
+        let needsConversion = false;
+        
+        // KRW/JPY 같은 형식 처리
+        if (currency.includes('/')) {
+          const parts = currency.split('/');
+          if (parts[0] === 'KRW' && parts[1] === 'JPY') {
+            targetCurrency = 'JPY';
+            needsConversion = true;
+          }
+        }
+        
+        // exchangerate.host API 사용
+        const response = await fetch(`https://api.exchangerate.host/latest?base=USD&symbols=${targetCurrency},KRW`);
+        
+        if (!response.ok) throw new Error('API 응답 오류');
+        
+        const data = await response.json();
+        
+        if (data.rates) {
+          if (needsConversion && data.rates.KRW && data.rates.JPY) {
+            // KRW/JPY 계산
+            const rate = data.rates.KRW / data.rates.JPY;
+            document.getElementById('exchangeRateInput').value = rate.toFixed(2);
+            document.getElementById('currencyCode').value = 'KRW';
+            alert(`현재 환율: 1 KRW = ${(1/rate).toFixed(4)} JPY\n(또는 100 JPY = ${(100/rate).toFixed(2)} KRW)`);
+          } else if (data.rates[targetCurrency]) {
+            const rate = data.rates[targetCurrency];
+            document.getElementById('exchangeRateInput').value = rate.toFixed(2);
+            alert(`현재 환율: 1 USD = ${rate.toFixed(2)} ${targetCurrency}`);
+          } else {
+            throw new Error('환율 데이터 없음');
+          }
+        } else {
+          throw new Error('환율 데이터 없음');
+        }
+      } catch (error) {
+        console.error('환율 가져오기 실패:', error);
+        // Fallback: 대체 API 시도
+        try {
+          const response2 = await fetch(`https://open.er-api.com/v6/latest/USD`);
+          const data2 = await response2.json();
+          let targetCurrency = currency;
+          
+          if (currency.includes('/')) {
+            const parts = currency.split('/');
+            if (parts[0] === 'KRW' && parts[1] === 'JPY') {
+              if (data2.rates && data2.rates.KRW && data2.rates.JPY) {
+                const rate = data2.rates.KRW / data2.rates.JPY;
+                document.getElementById('exchangeRateInput').value = rate.toFixed(2);
+                document.getElementById('currencyCode').value = 'KRW';
+                alert(`현재 환율: 1 KRW = ${(1/rate).toFixed(4)} JPY\n(또는 100 JPY = ${(100/rate).toFixed(2)} KRW)`);
+                return;
+              }
+            }
+            targetCurrency = parts[0];
+          }
+          
+          if (data2.rates && data2.rates[targetCurrency]) {
+            const rate = data2.rates[targetCurrency];
+            document.getElementById('exchangeRateInput').value = rate.toFixed(2);
+            alert(`현재 환율: 1 USD = ${rate.toFixed(2)} ${targetCurrency}`);
+          } else {
+            alert(`${currency} 환율을 찾을 수 없습니다.`);
+          }
+        } catch (error2) {
+          alert('환율을 가져오는데 실패했습니다. 인터넷 연결을 확인해주세요.');
+        }
+      } finally {
+        btn.textContent = '현재 환율';
+        btn.disabled = false;
+      }
+    }
+
+    async function checkForUpdates() {
+      if (!isOnline) return;
+      try {
+        const response = await fetch('./version.json?' + Date.now(), { cache: 'no-store' });
+        if (!response.ok) return;
+        const versionData = await response.json();
+        localStorage.setItem('lastUpdateCheck', Date.now().toString());
+        if (versionData.version !== APP_VERSION) {
+          showUpdateBanner();
+        }
+      } catch (error) {
+        // Ignore errors
+      }
+    }
+
+    function showUpdateBanner() {
+      const banner = document.getElementById('updateBanner');
+      if (localStorage.getItem('updateDismissed') !== 'true') {
+        banner.classList.add('show');
+      }
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (window.matchMedia('(display-mode: standalone)').matches || 
+          localStorage.getItem('installDismissed') === 'true') {
+        return;
+      }
+      setTimeout(() => {
+        document.getElementById('installBanner').classList.add('show');
+      }, 3000);
+    });
 
     document.getElementById('mainInput').addEventListener('input', (e) => {
       let val = e.target.value;
@@ -528,7 +1077,7 @@
       convert();
     });
 
-    document.getElementById('clearBtn').addEventListener('mousedown', (e) => {
+    document.getElementById('clearBtn').addEventListener('click', (e) => {
       e.preventDefault();
       document.getElementById('mainInput').value = '';
       currentMode = null;
@@ -549,37 +1098,88 @@
       renderButtons();
     });
 
-    document.getElementById('defaultBtn').addEventListener('click', () => {
-      buttonOrder = JSON.parse(JSON.stringify(DEFAULT_ORDER));
-      exchangeRate = DEFAULT_RATE;
+    document.getElementById('defaultBtn').addEventListener('click', async () => {
+      buttonOrder = {
+        row1: ['$/lb', 'lb.oz', 'lb', 'F'],
+        row2: ['shoes', 'ft.in', 'ft', '$'],
+        row3: ['mile', 'mpg', 'gallon', 'yard']
+      };
+      currencyCode = DEFAULT_CURRENCY;
+
+      // 현재 환율 가져오기 시도
+      if (isOnline) {
+        try {
+          const response = await fetch(`https://api.exchangerate.host/latest?base=USD&symbols=${DEFAULT_CURRENCY}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.rates && data.rates[DEFAULT_CURRENCY]) {
+              exchangeRate = data.rates[DEFAULT_CURRENCY];
+            } else {
+              exchangeRate = DEFAULT_RATE;
+            }
+          } else {
+            exchangeRate = DEFAULT_RATE;
+          }
+        } catch (error) {
+          exchangeRate = DEFAULT_RATE;
+        }
+      } else {
+        exchangeRate = DEFAULT_RATE;
+      }
+
       renderSettings();
     });
 
     document.getElementById('saveBtn').addEventListener('click', () => {
       exchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || DEFAULT_RATE;
+      currencyCode = document.getElementById('currencyCode').value.toUpperCase() || DEFAULT_CURRENCY;
       saveSettings();
       document.getElementById('settingsScreen').classList.remove('active');
       renderButtons();
       convert();
     });
 
+    document.getElementById('fetchRateBtn').addEventListener('click', fetchCurrentExchangeRate);
+
+    document.getElementById('updateNow').addEventListener('click', () => {
+      window.location.reload(true);
+    });
+
+    document.getElementById('dismissUpdate').addEventListener('click', () => {
+      document.getElementById('updateBanner').classList.remove('show');
+      localStorage.setItem('updateDismissed', 'true');
+    });
+
+    document.getElementById('installApp').addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById('installBanner').classList.remove('show');
+    });
+
+    document.getElementById('dismissInstall').addEventListener('click', () => {
+      document.getElementById('installBanner').classList.remove('show');
+      localStorage.setItem('installDismissed', 'true');
+    });
+
+    window.addEventListener('online', () => {
+      updateOnlineStatus();
+      checkForUpdates();
+    });
+
+    window.addEventListener('offline', updateOnlineStatus);
+
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').then(reg => {
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              if (confirm('새로운 버전이 있습니다. 업데이트하시겠습니까?')) {
-                window.location.reload();
-              }
-            }
-          });
-        });
-      });
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('SW registered'))
+        .catch(() => console.log('SW not available'));
     }
 
     loadSettings();
     renderButtons();
+    updateOnlineStatus();
+    if (isOnline) checkForUpdates();
     document.getElementById('mainInput').focus();
   </script>
 </body>
