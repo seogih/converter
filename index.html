@@ -880,26 +880,26 @@
       }
     }
 
-    function renderSettings() {
+    function renderSettings(skipExchangeRateUpdate = false) {
       const grid = document.getElementById('settingsGrid');
       grid.innerHTML = '';
-      
+
       const tempOrder = {
         row1: [...buttonOrder.row1],
         row2: [...buttonOrder.row2],
         row3: [...buttonOrder.row3]
       };
-      
+
       const rows = [tempOrder.row1, tempOrder.row2, tempOrder.row3];
-      
+
       for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
         const row = rows[rowIdx];
         if (!row) continue;
-        
+
         const rowDiv = document.createElement('div');
         rowDiv.className = 'settings-row';
         rowDiv.dataset.row = rowIdx;
-        
+
         for (let idx = 0; idx < row.length; idx++) {
           const mode = row[idx];
           const btn = document.createElement('div');
@@ -908,22 +908,22 @@
           btn.draggable = true;
           btn.dataset.row = rowIdx;
           btn.dataset.idx = idx;
-          
+
           btn.addEventListener('dragstart', (e) => {
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', JSON.stringify({row: rowIdx, idx}));
             btn.classList.add('dragging');
           });
-          
+
           btn.addEventListener('dragend', () => {
             btn.classList.remove('dragging');
           });
-          
+
           btn.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
           });
-          
+
           btn.addEventListener('drop', (e) => {
             e.preventDefault();
             const data = JSON.parse(e.dataTransfer.getData('text/plain'));
@@ -931,27 +931,33 @@
             const fromIdx = data.idx;
             const toRow = parseInt(btn.dataset.row);
             const toIdx = parseInt(btn.dataset.idx);
-            
+
             const item = tempOrder[`row${fromRow + 1}`][fromIdx];
             tempOrder[`row${fromRow + 1}`].splice(fromIdx, 1);
             tempOrder[`row${toRow + 1}`].splice(toIdx, 0, item);
-            
+
             buttonOrder = tempOrder;
             renderSettings();
           });
-          
+
           rowDiv.appendChild(btn);
         }
         grid.appendChild(rowDiv);
       }
-      
-      document.getElementById('exchangeRateInput').value = exchangeRate;
-      document.getElementById('currencyCode').value = currencyCode;
-      
+
+      // skipExchangeRateUpdate가 true면 환율 입력칸은 건드리지 않음
+      if (!skipExchangeRateUpdate) {
+        document.getElementById('exchangeRateInput').value = exchangeRate;
+        document.getElementById('currencyCode').value = currencyCode;
+      } else {
+        // currencyCode만 업데이트
+        document.getElementById('currencyCode').value = currencyCode;
+      }
+
       const lastCheck = localStorage.getItem('lastUpdateCheck');
       if (lastCheck) {
         const date = new Date(parseInt(lastCheck));
-        document.getElementById('lastUpdateCheck').textContent = 
+        document.getElementById('lastUpdateCheck').textContent =
           `마지막 확인: ${date.toLocaleString('ko-KR')}`;
       }
     }
@@ -1114,20 +1120,21 @@
         row3: ['mile', 'mpg', 'gallon', 'yard']
       };
 
-      // 먼저 settings를 렌더링하여 버튼 순서를 표시
-      renderSettings();
-
-      // 통화 코드 설정
+      // 통화 코드를 먼저 설정 (fetchCurrentExchangeRate가 이 값을 읽음)
       currencyCode = DEFAULT_CURRENCY;
       document.getElementById('currencyCode').value = DEFAULT_CURRENCY;
 
       // 현재 환율 버튼 클릭한 것처럼 동작
       if (isOnline) {
         await fetchCurrentExchangeRate();
-        // fetchCurrentExchangeRate()가 입력칸을 업데이트하므로 추가 작업 불필요
+        // fetchCurrentExchangeRate()가 입력칸을 업데이트함
+
+        // 전체 settings를 다시 렌더링하되, 환율 입력칸은 덮어쓰지 않음
+        renderSettings(true);
       } else {
         // 오프라인이면 기본값 사용
         document.getElementById('exchangeRateInput').value = DEFAULT_RATE;
+        renderSettings(true);
       }
     });
 
