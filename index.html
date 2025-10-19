@@ -559,17 +559,30 @@
     }
 
     function formatWithK(num, decimals = 0) {
-      if (Math.abs(num) >= 1000000) {
-        return Math.round(num / 1000).toLocaleString('en-US') + 'k';
+      const absNum = Math.abs(num);
+
+      // 1,000,000,000 이상: 1,000,000 단위로 반올림하고 m 추가
+      if (absNum >= 1000000000) {
+        const mValue = Math.round(num / 1000000);
+        return mValue.toLocaleString('en-US') + 'm';
       }
-      return formatNumber(num, decimals);
+      // 1,000,000 이상: 1,000 단위로 반올림하고 k 추가
+      else if (absNum >= 1000000) {
+        const kValue = Math.round(num / 1000);
+        return kValue.toLocaleString('en-US') + 'k';
+      }
+      // 1,000 이상: 정수로 반올림
+      else if (absNum >= 1000) {
+        return Math.round(num).toLocaleString('en-US');
+      }
+      // 1,000 미만: 소숫점 2자리
+      else {
+        return formatNumber(num, 2);
+      }
     }
 
     function formatCurrency(num) {
-      if (Math.abs(num) >= 1000) {
-        return Math.round(num).toLocaleString('en-US');
-      }
-      return formatNumber(num, 2);
+      return formatWithK(num);
     }
 
 
@@ -582,15 +595,15 @@
         const usData = SHOE_SIZES.mmToUs[mm];
 
         if (usData) {
-          // 오른쪽 위: US Men MM
+          // 오른쪽 위: US Men
           outputA = usData.men || '-';
-          unitA = 'mm M';
-          // 왼쪽 아래: US Youth MM
+          unitA = 'US M';
+          // 왼쪽 아래: US Youth
           inputB = usData.youth || '-';
-          unitInputB = 'mm Y';
-          // 오른쪽 아래: US Women MM
+          unitInputB = 'US Y';
+          // 오른쪽 아래: US Women
           outputB = usData.women || '-';
-          unitB = 'mm F';
+          unitB = 'US F';
         }
       }
       // US 사이즈 입력 (0.5-13.5)
@@ -669,7 +682,7 @@
           const ounces = parseInt(parts[1]) || 0;
           const totalOz = pounds * 16 + ounces;
           const kg = totalOz * 0.0283495;
-          
+
           if (kg >= 1) {
             outputA = formatNumber(kg, 2);
             unitA = 'kg';
@@ -677,17 +690,17 @@
             outputA = formatNumber(kg * 1000);
             unitA = 'g';
           }
-          
+
           const kgInput = val;
           const totalOzFromKg = kgInput / 0.0283495;
           const lbFromKg = Math.floor(totalOzFromKg / 16);
           const ozFromKg = Math.round(totalOzFromKg % 16);
-          
+
           if (val < 1) {
-            inputB = formatNumber(val * 1000);
+            inputB = formatNumber(val * 1000, 3);
             unitInputB = 'g';
           } else {
-            inputB = formatNumber(val, 2);
+            inputB = formatNumber(val, 3);
             unitInputB = 'kg';
           }
           outputB = `${lbFromKg} lb ${ozFromKg} oz`;
@@ -703,9 +716,9 @@
             outputA = formatNumber(kgFromLb * 1000);
             unitA = 'g';
           }
-          inputB = formatNumber(val, 2);
+          inputB = formatNumber(val, 3);
           unitInputB = 'kg';
-          outputB = formatNumber(val * 2.20462262, 2);
+          outputB = formatNumber(val * 2.20462262, 3);
           unitB = 'lb';
           break;
 
@@ -736,7 +749,7 @@
           const totalInches = feet * 12 + inches;
           const cmFromFtIn = totalInches * 2.54;
           const mFromFtIn = cmFromFtIn / 100;
-          
+
           if (mFromFtIn >= 1) {
             outputA = formatNumber(mFromFtIn, 2);
             unitA = 'm';
@@ -744,17 +757,17 @@
             outputA = formatNumber(cmFromFtIn);
             unitA = 'cm';
           }
-          
+
           const metersInput = val;
           const totalInFromM = metersInput * 100 / 2.54;
           const ftFromM = Math.floor(totalInFromM / 12);
           const inFromM = Math.round(totalInFromM % 12);
-          
+
           if (val < 1) {
-            inputB = formatNumber(val * 100);
+            inputB = formatNumber(val * 100, 2);
             unitInputB = 'cm';
           } else {
-            inputB = formatNumber(val, 1);
+            inputB = formatNumber(val, 2);
             unitInputB = 'm';
           }
           outputB = `${ftFromM}' ${inFromM}"`;
@@ -797,9 +810,9 @@
             outputA = formatNumber(kmFromMile * 1000);
             unitA = 'm';
           }
-          inputB = formatNumber(val, 2);
+          inputB = formatNumber(val, 3);
           unitInputB = 'km';
-          outputB = formatNumber(val / 1.609344, 2);
+          outputB = formatNumber(val / 1.609344, 3);
           unitB = 'mile';
           break;
 
@@ -815,9 +828,9 @@
         case 'gallon':
           outputA = formatNumber(val * 3.785411784, 2);
           unitA = 'liter';
-          inputB = formatNumber(val, 2);
+          inputB = formatNumber(val, 3);
           unitInputB = 'liter';
-          outputB = formatNumber(val / 3.785411784, 2);
+          outputB = formatNumber(val / 3.785411784, 3);
           unitB = 'gallon';
           break;
 
