@@ -695,13 +695,8 @@
             unitA = 'g';
           }
 
-          if (kg >= 1) {
-            inputB = formatNumber(kg, 2);
-            unitInputB = 'kg';
-          } else {
-            inputB = formatNumber(kg * 1000);
-            unitInputB = 'g';
-          }
+          inputB = input;
+          unitInputB = 'kg';
 
           const kgInput = val;
           const totalOzFromKg = kgInput / 0.0283495;
@@ -721,13 +716,8 @@
             outputA = formatNumber(kgFromLb * 1000);
             unitA = 'g';
           }
-          if (kgFromLb >= 1) {
-            inputB = formatNumber(kgFromLb, 2);
-            unitInputB = 'kg';
-          } else {
-            inputB = formatNumber(kgFromLb * 1000);
-            unitInputB = 'g';
-          }
+          inputB = input;
+          unitInputB = 'kg';
           outputB = formatNumber(val * 2.20462262, 3);
           unitB = 'lb';
           break;
@@ -768,13 +758,8 @@
             unitA = 'cm';
           }
 
-          if (mFromFtIn >= 1) {
-            inputB = formatNumber(mFromFtIn, 2);
-            unitInputB = 'm';
-          } else {
-            inputB = formatNumber(cmFromFtIn);
-            unitInputB = 'cm';
-          }
+          inputB = input;
+          unitInputB = 'm';
 
           const metersInput = val;
           const totalInFromM = metersInput * 100 / 2.54;
@@ -794,13 +779,8 @@
             outputA = formatNumber(mFromFt * 100);
             unitA = 'cm';
           }
-          if (mFromFt >= 1) {
-            inputB = formatNumber(mFromFt, 2);
-            unitInputB = 'm';
-          } else {
-            inputB = formatNumber(mFromFt * 100);
-            unitInputB = 'cm';
-          }
+          inputB = input;
+          unitInputB = 'm';
           outputB = formatNumber(val / 0.3048, 2);
           unitB = 'ft';
           break;
@@ -810,7 +790,7 @@
           outputA = formatWithK(localAmount);
           unitA = currencyCode;
 
-          inputB = formatWithK(localAmount);
+          inputB = input;
           unitInputB = currencyCode;
           const dollarAmount = val / exchangeRate;
           outputB = formatCurrency(dollarAmount);
@@ -826,13 +806,8 @@
             outputA = formatNumber(kmFromMile * 1000);
             unitA = 'm';
           }
-          if (kmFromMile >= 1) {
-            inputB = formatNumber(kmFromMile, 2);
-            unitInputB = 'km';
-          } else {
-            inputB = formatNumber(kmFromMile * 1000);
-            unitInputB = 'm';
-          }
+          inputB = input;
+          unitInputB = 'km';
           outputB = formatNumber(val / 1.609344, 3);
           unitB = 'mile';
           break;
@@ -849,7 +824,7 @@
         case 'gallon':
           outputA = formatNumber(val * 3.785411784, 2);
           unitA = 'liter';
-          inputB = formatNumber(val * 3.785411784, 2);
+          inputB = input;
           unitInputB = 'liter';
           outputB = formatNumber(val / 3.785411784, 3);
           unitB = 'gallon';
@@ -858,7 +833,7 @@
         case 'yard':
           outputA = formatNumber(val * 0.9144, 2);
           unitA = 'm';
-          inputB = formatNumber(val * 0.9144, 2);
+          inputB = input;
           unitInputB = 'm';
           outputB = formatNumber(val / 0.9144, 2);
           unitB = 'yard';
@@ -1138,18 +1113,22 @@
         row2: ['shoes', 'ft.in', 'ft', '$'],
         row3: ['mile', 'mpg', 'gallon', 'yard']
       };
+
+      // 먼저 settings를 렌더링하여 버튼 순서를 표시
+      renderSettings();
+
+      // 통화 코드 설정
       currencyCode = DEFAULT_CURRENCY;
       document.getElementById('currencyCode').value = DEFAULT_CURRENCY;
 
       // 현재 환율 버튼 클릭한 것처럼 동작
       if (isOnline) {
         await fetchCurrentExchangeRate();
+        // fetchCurrentExchangeRate()가 입력칸을 업데이트하므로 추가 작업 불필요
       } else {
         // 오프라인이면 기본값 사용
         document.getElementById('exchangeRateInput').value = DEFAULT_RATE;
       }
-
-      renderSettings();
     });
 
     document.getElementById('saveBtn').addEventListener('click', () => {
