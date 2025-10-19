@@ -695,8 +695,13 @@
             unitA = 'g';
           }
 
-          inputB = input;
-          unitInputB = 'lb.oz';
+          if (kg >= 1) {
+            inputB = formatNumber(kg, 2);
+            unitInputB = 'kg';
+          } else {
+            inputB = formatNumber(kg * 1000);
+            unitInputB = 'g';
+          }
 
           const kgInput = val;
           const totalOzFromKg = kgInput / 0.0283495;
@@ -716,8 +721,13 @@
             outputA = formatNumber(kgFromLb * 1000);
             unitA = 'g';
           }
-          inputB = input;
-          unitInputB = 'lb';
+          if (kgFromLb >= 1) {
+            inputB = formatNumber(kgFromLb, 2);
+            unitInputB = 'kg';
+          } else {
+            inputB = formatNumber(kgFromLb * 1000);
+            unitInputB = 'g';
+          }
           outputB = formatNumber(val * 2.20462262, 3);
           unitB = 'lb';
           break;
@@ -758,8 +768,13 @@
             unitA = 'cm';
           }
 
-          inputB = input;
-          unitInputB = 'ft.in';
+          if (mFromFtIn >= 1) {
+            inputB = formatNumber(mFromFtIn, 2);
+            unitInputB = 'm';
+          } else {
+            inputB = formatNumber(cmFromFtIn);
+            unitInputB = 'cm';
+          }
 
           const metersInput = val;
           const totalInFromM = metersInput * 100 / 2.54;
@@ -779,8 +794,13 @@
             outputA = formatNumber(mFromFt * 100);
             unitA = 'cm';
           }
-          inputB = input;
-          unitInputB = 'ft';
+          if (mFromFt >= 1) {
+            inputB = formatNumber(mFromFt, 2);
+            unitInputB = 'm';
+          } else {
+            inputB = formatNumber(mFromFt * 100);
+            unitInputB = 'cm';
+          }
           outputB = formatNumber(val / 0.3048, 2);
           unitB = 'ft';
           break;
@@ -790,8 +810,8 @@
           outputA = formatWithK(localAmount);
           unitA = currencyCode;
 
-          inputB = input;
-          unitInputB = '$';
+          inputB = formatWithK(localAmount);
+          unitInputB = currencyCode;
           const dollarAmount = val / exchangeRate;
           outputB = formatCurrency(dollarAmount);
           unitB = '$';
@@ -806,8 +826,13 @@
             outputA = formatNumber(kmFromMile * 1000);
             unitA = 'm';
           }
-          inputB = input;
-          unitInputB = 'mile';
+          if (kmFromMile >= 1) {
+            inputB = formatNumber(kmFromMile, 2);
+            unitInputB = 'km';
+          } else {
+            inputB = formatNumber(kmFromMile * 1000);
+            unitInputB = 'm';
+          }
           outputB = formatNumber(val / 1.609344, 3);
           unitB = 'mile';
           break;
@@ -815,8 +840,8 @@
         case 'mpg':
           outputA = formatNumber(val * 0.425143707, 2);
           unitA = 'km/L';
-          inputB = input;
-          unitInputB = 'mpg';
+          inputB = formatNumber(val * 0.425143707, 2);
+          unitInputB = 'km/L';
           outputB = formatNumber(val / 0.425143707, 2);
           unitB = 'mpg';
           break;
@@ -824,8 +849,8 @@
         case 'gallon':
           outputA = formatNumber(val * 3.785411784, 2);
           unitA = 'liter';
-          inputB = input;
-          unitInputB = 'gallon';
+          inputB = formatNumber(val * 3.785411784, 2);
+          unitInputB = 'liter';
           outputB = formatNumber(val / 3.785411784, 3);
           unitB = 'gallon';
           break;
@@ -833,8 +858,8 @@
         case 'yard':
           outputA = formatNumber(val * 0.9144, 2);
           unitA = 'm';
-          inputB = input;
-          unitInputB = 'yard';
+          inputB = formatNumber(val * 0.9144, 2);
+          unitInputB = 'm';
           outputB = formatNumber(val / 0.9144, 2);
           unitB = 'yard';
           break;
@@ -1117,7 +1142,12 @@
       document.getElementById('currencyCode').value = DEFAULT_CURRENCY;
 
       // 현재 환율 버튼 클릭한 것처럼 동작
-      await fetchCurrentExchangeRate();
+      if (isOnline) {
+        await fetchCurrentExchangeRate();
+      } else {
+        // 오프라인이면 기본값 사용
+        document.getElementById('exchangeRateInput').value = DEFAULT_RATE;
+      }
 
       renderSettings();
     });
