@@ -201,11 +201,11 @@
       font-size: 16px;
     }
     .rate-input-row input[type="number"] {
-      flex: 1;
-      max-width: 140px;
+      flex: 2;
     }
     .rate-input-row input[type="text"] {
-      width: 80px;
+      flex: 1;
+      min-width: 60px;
       flex-shrink: 0;
       text-transform: uppercase;
     }
@@ -494,19 +494,19 @@
         225: { men: null, women: 35.5, kids: 35.5 },
         230: { men: null, women: 36, kids: 36 },
         235: { men: null, women: 36.5, kids: 36.5 },
-        240: { men: 38.5, women: 37, kids: 37 },
-        245: { men: 39, women: 37.5, kids: 38 },
+        240: { men: 39, women: 37, kids: 37 },
+        245: { men: 39.5, women: 37.5, kids: 38 },
         250: { men: 40, women: 38, kids: 38.5 },
         255: { men: 40.5, women: 38.5, kids: 39 },
-        260: { men: 41, women: 39, kids: 40 },
-        265: { men: 42, women: 39.5, kids: 41 },
-        270: { men: 42.5, women: 40, kids: 42 },
-        275: { men: 43, women: 40.5, kids: 43 },
-        280: { men: 44, women: 41, kids: 44 },
-        285: { men: 44.5, women: 41.5, kids: 45 },
-        290: { men: 45, women: 42, kids: 46 },
-        295: { men: 45.5, women: 42.5, kids: 47 },
-        300: { men: 46, women: 43, kids: 48 }
+        260: { men: 41, women: 39, kids: null },
+        265: { men: 41.5, women: 39.5, kids: null },
+        270: { men: 42, women: 40, kids: null },
+        275: { men: 42.5, women: 40.5, kids: null },
+        280: { men: 43, women: 41, kids: null },
+        285: { men: 43.5, women: 41.5, kids: null },
+        290: { men: 44, women: 42, kids: null },
+        295: { men: 44.5, women: 42.5, kids: null },
+        300: { men: 45, women: 43, kids: null }
       }
     };
 
@@ -653,7 +653,11 @@
     }
 
     function convert() {
-      const input = document.getElementById('mainInput').value;
+      let input = document.getElementById('mainInput').value;
+      // $ 모드일 때는 콤마 제거 후 파싱
+      if (currentMode === '$') {
+        input = input.replace(/,/g, '');
+      }
       const val = parseFloat(input) || 0;
       
       let outputA = '', unitA = '', inputB = '', unitInputB = '', outputB = '', unitB = '';
@@ -676,7 +680,12 @@
           inputB = input;
           unitInputB = '$/lb';
           const localPricePerKg = pricePerKg * exchangeRate;
-          outputB = formatWithK(Math.round(localPricePerKg));
+          // 100,000 이상이면 k 표시
+          if (localPricePerKg >= 100000) {
+            outputB = Math.round(localPricePerKg / 1000).toLocaleString('en-US') + 'k';
+          } else {
+            outputB = Math.round(localPricePerKg).toLocaleString('en-US');
+          }
           unitB = `${currencyCode}/kg`;
           break;
 
@@ -790,7 +799,13 @@
           outputA = formatWithK(localAmount);
           unitA = currencyCode;
 
-          inputB = input;
+          // 왼쪽 아래: 1,000,000 이상이면 k 표시, 그 외에는 천 단위 콤마
+          const valForInputB = val;
+          if (valForInputB >= 1000000) {
+            inputB = Math.round(valForInputB / 1000).toLocaleString('en-US') + 'k';
+          } else {
+            inputB = valForInputB.toLocaleString('en-US');
+          }
           unitInputB = currencyCode;
           const dollarAmount = val / exchangeRate;
           outputB = formatCurrency(dollarAmount);
@@ -1085,11 +1100,36 @@
 
     document.getElementById('mainInput').addEventListener('input', (e) => {
       let val = e.target.value;
-      if (!/^-?\d*\.?\d*$/.test(val)) {
-        e.target.value = val.slice(0, -1);
-        return;
+
+      // $ 모드일 때만 콤마 포맷 적용
+      if (currentMode === '$') {
+        // 콤마 제거하고 숫자만 추출
+        let numericValue = val.replace(/,/g, '');
+
+        // 숫자와 소수점만 허용
+        if (!/^-?\d*\.?\d*$/.test(numericValue)) {
+          e.target.value = val.slice(0, -1);
+          return;
+        }
+
+        // 소수점이 있으면 포맷 적용 안 함
+        if (numericValue.includes('.')) {
+          e.target.value = numericValue;
+        } else if (numericValue !== '') {
+          // 정수일 때만 콤마 추가
+          const formatted = parseFloat(numericValue).toLocaleString('en-US');
+          e.target.value = formatted;
+        }
+
+        convert();
+      } else {
+        // 다른 모드에서는 기존 로직 유지
+        if (!/^-?\d*\.?\d*$/.test(val)) {
+          e.target.value = val.slice(0, -1);
+          return;
+        }
+        convert();
       }
-      convert();
     });
 
     document.getElementById('clearBtn').addEventListener('click', (e) => {
