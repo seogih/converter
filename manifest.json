@@ -1,7 +1,7 @@
 {
-  "name": "Converter - 단위 변환기",
+  "name": "Converter - Unit Converter",
   "short_name": "Converter",
-  "description": "오프라인 지원 단위 변환 앱",
+  "description": "Offline-supported unit conversion app",
   "start_url": "./?source=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -22,5 +22,5 @@
     }
   ],
   "categories": ["utilities", "productivity"],
-  "lang": "ko-KR"
+  "lang": "en-US"
 }
